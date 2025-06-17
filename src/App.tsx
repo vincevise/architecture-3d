@@ -6,6 +6,7 @@ import MassHousingFPV from "./components/3d/models/masshousing";
 import ResidenceFPV from "./components/3d/models/residence";
 import SafakatFPV from "./components/3d/models/safakathouse";
 import AestheticSceneR3F from "./components/3d/aesthetic";
+import Home from "./components/home";
 
 function App() {
   return (
@@ -66,6 +67,13 @@ function App() {
                 element={
                   
                     <AestheticSceneR3F />
+                }
+              />
+               <Route
+                path="/"
+                element={
+                  
+                <Home/>
                 }
               />
                {/* <Route
