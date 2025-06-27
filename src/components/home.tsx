@@ -10,6 +10,7 @@ const Home = () => {
             <Link to="/mass-housing" className="text-blue-500 hover:underline text-lg">Mass Housing</Link>
             <Link to="/safakat-house" className="text-blue-500 hover:underline text-lg">Safakat House</Link>
             <Link to="/aesthetic" className="text-blue-500 hover:underline text-lg">Aesthetic</Link>
+            <Link to="/vav" className="text-blue-500 hover:underline text-lg">Vav</Link>
  
         </nav>
     </div>

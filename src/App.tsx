@@ -7,6 +7,8 @@ import ResidenceFPV from "./components/3d/models/residence";
 import SafakatFPV from "./components/3d/models/safakathouse";
 import AestheticSceneR3F from "./components/3d/aesthetic";
 import Home from "./components/home";
+import UrbansemScene from "./components/3d/models/urban";
+import VavFPV from "./components/3d/models/vav";
 
 function App() {
   return (
@@ -62,6 +64,17 @@ function App() {
                   </BasicScene>
                 }
               />
+              <Route
+                path="/vav"
+                element={
+                  <BasicScene
+                    camera_position={[-7, 22, -15]}
+                    showToggleFPV={true}
+                  >
+                    <VavFPV />
+                  </BasicScene>
+                }
+              />
                <Route
                 path="/aesthetic"
                 element={
@@ -76,13 +89,13 @@ function App() {
                 <Home/>
                 }
               />
-               {/* <Route
+               <Route
                 path="/urban-sem"
                 element={
                  
                     <UrbansemScene />
                 }
-              /> */}
+              />
               {/* <Route path="*" element={<NotFound />} /> */}
             </Routes>
           </main>
