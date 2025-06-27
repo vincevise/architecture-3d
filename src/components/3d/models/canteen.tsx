@@ -54,7 +54,7 @@ export default function CanteenFPV() {
           scale={[0.5, 0.5, 0.5]}
         />
       </RigidBody>
-      <RigidBody type="fixed" colliders="trimesh">
+      <RigidBody type="fixed" colliders="trimesh" >
         <primitive
           object={scene2}
           ref={modelRef2}
