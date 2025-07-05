@@ -90,7 +90,7 @@ function App() {
                 }
               />
                <Route
-                path="/urban-sem"
+                path="/urbansem"
                 element={
                  
                     <UrbansemScene />

@@ -5,7 +5,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import * as THREE from "three";
 
 export default function VavFPV() {
-  const { scene: scene1 } = useGLTF("/3d/vav/vav2.gltf");
+  const { scene: scene1 } = useGLTF("/vav/vav2.gltf");
   
   const modelRef1 = useRef<RefObject<unknown> | null>(null);
 

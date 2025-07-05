@@ -116,7 +116,7 @@ const UrbansemScene = ({width, height}:Props) => {
     }
     
     // Load the model
-    loadModel('/3d/urban/urbansem.gltf', new THREE.Vector3(-10, -5, -5));
+    loadModel('/urban/urbansem.gltf', new THREE.Vector3(-10, -5, -5));
     
     // Floor
     const floor = new THREE.Mesh(
