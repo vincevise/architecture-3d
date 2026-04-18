@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import ModelLoader from '../../ui/model-loader';
 
 type Props = {
     width?:number;
@@ -12,6 +13,8 @@ type Props = {
 
 const UrbansemScene = ({width, height}:Props) => {
   const canvasRef = useRef(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     if(!window) return
@@ -111,6 +114,16 @@ const UrbansemScene = ({width, height}:Props) => {
               addOutlineToMesh(child);
             }
           });
+          setIsLoading(false);
+        },
+        (xhr) => {
+          if (xhr.total > 0) {
+            setLoadingProgress((xhr.loaded / xhr.total) * 100);
+          }
+        },
+        (error) => {
+          console.error(error);
+          setIsLoading(false);
         }
       );
     }
@@ -248,7 +261,12 @@ const UrbansemScene = ({width, height}:Props) => {
     };
   }, []);
   
-  return <canvas ref={canvasRef} className="w-full h-full threejs-canvas" />;
+  return (
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', backgroundColor: '#000' }}>
+      {isLoading && <ModelLoader progress={loadingProgress} label="Loading Urban Model" />}
+      <canvas ref={canvasRef} className="w-full h-full threejs-canvas" />
+    </div>
+  );
 };
 
 export default UrbansemScene;

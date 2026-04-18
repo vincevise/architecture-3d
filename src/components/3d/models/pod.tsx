@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import ModelLoader from '../../ui/model-loader';
 
 type Props = {
   width?: number;
@@ -13,6 +14,8 @@ type Props = {
 const PodScene = ({ width, height }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!window) return
@@ -123,6 +126,16 @@ const PodScene = ({ width, height }: Props) => {
               addOutlineToMesh(child);
             }
           });
+          setIsLoading(false);
+        },
+        (xhr) => {
+          if (xhr.total > 0) {
+            setLoadingProgress((xhr.loaded / xhr.total) * 100);
+          }
+        },
+        (error) => {
+          console.error(error);
+          setIsLoading(false);
         }
       );
     }
@@ -130,8 +143,6 @@ const PodScene = ({ width, height }: Props) => {
     // Load the model
     // Centered model instead of using (-10, -5, -5)
     loadModel('/pod/urbansem.gltf', new THREE.Vector3(0, 0, 0));
-
-
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 2);
@@ -271,9 +282,11 @@ const PodScene = ({ width, height }: Props) => {
         height: '100vh',
         overflowY: 'auto', // Enable vertical scrolling
         overflowX: 'hidden',
-        position: 'relative'
+        position: 'relative',
+        backgroundColor: '#000'
       }}
     >
+      {isLoading && <ModelLoader progress={loadingProgress} label="Loading Pod Model" />}
       <div style={{ height: '300vh', width: '100%' }}>
         {/* Empty space to make it scrollable */}
       </div>

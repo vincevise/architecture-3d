@@ -1,11 +1,12 @@
 'use client'
-import { KeyboardControls, OrbitControls, PointerLockControls } from "@react-three/drei";
+import { KeyboardControls, OrbitControls, PointerLockControls, useProgress } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { useState, type ReactNode } from "react";
 import Button from "../../ui/Button";
 import World from "./World";
 import FPScontrols from "./FPDControls";
+import ModelLoader from "../../ui/model-loader";
 
 type Props = {
     children:ReactNode;
@@ -15,9 +16,11 @@ type Props = {
 
 export default function BasicScene({children, showToggleFPV, camera_position = [-7, 22, -15],}: Props) {
   const [isFPV, setIsFPV] = useState(false);
+  const { active, progress } = useProgress();
 
   return (
-    <div className="w-screen h-screen bg-white">
+    <div className="w-screen h-screen bg-white relative">
+        {active && <ModelLoader progress={progress} />}
         {showToggleFPV && 
             <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1000 }}>
 
