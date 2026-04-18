@@ -9,6 +9,8 @@ import AestheticSceneR3F from "./components/3d/aesthetic";
 import Home from "./components/home";
 import UrbansemScene from "./components/3d/models/urban";
 import VavFPV from "./components/3d/models/vav";
+import PodScene from "./components/3d/models/pod";
+import ThesisScene from "./components/3d/models/thesis";
 
 function App() {
   return (
@@ -94,6 +96,20 @@ function App() {
                 element={
                  
                     <UrbansemScene />
+                }
+              />
+               <Route
+                path="/pod"
+                element={
+                 
+                    <PodScene />
+                }
+              />
+               <Route
+                path="/thesis"
+                element={
+                 
+                    <ThesisScene />
                 }
               />
               {/* <Route path="*" element={<NotFound />} /> */}
