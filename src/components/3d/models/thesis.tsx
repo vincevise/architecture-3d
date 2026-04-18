@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 type Props = {
   width?: number;
@@ -33,29 +33,43 @@ const ThesisScene = ({ width, height }: Props) => {
     const axisHelper = new THREE.AxesHelper(10);
     scene.add(axisHelper);
 
-    // Loader for STL
-    const stlLoader = new STLLoader();
+    // Loader for GLB (optimized version of the STL)
+    const loader = new GLTFLoader();
 
-    stlLoader.load('/thesis/thesis.stl', (geometry) => {
-      // Center the geometry
-      geometry.center();
+    loader.load('/thesis/thesis.glb', (gltf) => {
+      const model = gltf.scene;
 
-      const material = new THREE.MeshStandardMaterial({
-        color: '#c0c0c0', // Clean greyish material for STL
-        metalness: 0.1,
-        roughness: 0.5,
+      // Center the model
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+
+      model.traverse((child: any) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          // Apply a clean material if needed, or keep the default
+          child.material = new THREE.MeshStandardMaterial({
+            color: '#c0c0c0',
+            metalness: 0.1,
+            roughness: 0.5,
+          });
+        }
       });
-
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
       
-      mesh.scale.set(0.1, 0.1, 0.1); 
-      // Many STLs are exported with Z up, so we rotate x by -90 degrees.
-      // You can adjust this if it loads sideways.
-      mesh.rotation.x = -Math.PI / 2; 
+      model.scale.set(0.1, 0.1, 0.1); 
+      // Rotation might be different for GLB depending on conversion, 
+      // but usually GLTF is Y-up. Let's start with neutral or keep previous if it worked.
+      // previous STL had -Math.PI / 2 on X. GLB converted from trimesh might be different.
+      // model.rotation.x = -Math.PI / 2; 
 
-      scene.add(mesh);
+      scene.add(model);
+    }, 
+    (xhr) => {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    (error) => {
+      console.error('An error happened', error);
     });
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 2);
