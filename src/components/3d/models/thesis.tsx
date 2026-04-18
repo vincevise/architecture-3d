@@ -93,7 +93,8 @@ const ThesisScene = ({ width, height }: Props) => {
       });
       
       // 4. Set camera at a predictable distance for a 50-unit model
-      camera.position.set(60, 40, 60);
+      // Was [60, 40, 60], moving closer to [30, 20, 30]
+      camera.position.set(30, 20, 30);
       camera.lookAt(0, 0, 0);
       
       controls.target.set(0, 0, 0);
