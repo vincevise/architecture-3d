@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -13,6 +13,8 @@ type Props = {
 const ThesisScene = ({ width, height }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!window) return;
@@ -30,9 +32,6 @@ const ThesisScene = ({ width, height }: Props) => {
     const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000000);
     camera.position.set(100, 100, 100);
     scene.add(camera);
-
-    const axisHelper = new THREE.AxesHelper(10);
-    scene.add(axisHelper);
 
     // Initial Controls Setup
     const controls = new OrbitControls(camera, canvas);
@@ -55,28 +54,19 @@ const ThesisScene = ({ width, height }: Props) => {
     loader.load('/thesis/thesis.glb', (gltf) => {
       const model = gltf.scene;
 
-      // 1. Calculate the bounding box of the original model
       const box = new THREE.Box3().setFromObject(model);
       const size = new THREE.Vector3();
       box.getSize(size);
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      console.log('Model Size:', size);
-      console.log('Model Center:', center);
-
-      // 2. Normalize the model scale
       const maxDim = Math.max(size.x, size.y, size.z);
       const scaleFactor = 50 / maxDim;
       model.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-      // 3. Rotate to fix vertical alignment (Z-up to Y-up)
       model.rotation.x = -Math.PI / 2;
 
-      // 4. Position the model correctly after rotation
-      // Since it's rotated, we adjust based on the original center
       model.position.x = -center.x * scaleFactor;
-      // After rotation on X, Y becomes Z and Z becomes -Y
       model.position.y = center.z * scaleFactor;
       model.position.z = -center.y * scaleFactor;
 
@@ -92,26 +82,26 @@ const ThesisScene = ({ width, height }: Props) => {
         }
       });
       
-      // 4. Set camera at a predictable distance for a 50-unit model
-      // Was [60, 40, 60], moving closer to [30, 20, 30]
-      camera.position.set(30, 20, 30);
+      camera.position.set(10, 10, 10);
       camera.lookAt(0, 0, 0);
       
       controls.target.set(0, 0, 0);
       controls.update();
 
       scene.add(model);
+      setIsLoading(false);
     }, 
     (xhr) => {
       if (xhr.total > 0) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        const percentComplete = (xhr.loaded / xhr.total) * 100;
+        setLoadingProgress(Math.round(percentComplete));
       }
     },
     (error) => {
       console.error('Model loading error:', error);
+      setIsLoading(false);
     });
 
-    // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
 
@@ -158,7 +148,44 @@ const ThesisScene = ({ width, height }: Props) => {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
+    <div ref={containerRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000', position: 'relative' }}>
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: '#000',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10,
+          color: '#fff',
+          fontFamily: 'sans-serif'
+        }}>
+          <div style={{
+            width: '200px',
+            height: '2px',
+            backgroundColor: '#333',
+            marginBottom: '10px',
+            borderRadius: '2px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${loadingProgress}%`,
+              height: '100%',
+              backgroundColor: '#fff',
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
+          <div style={{ fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            Loading Thesis {loadingProgress}%
+          </div>
+        </div>
+      )}
+      
       <canvas
         ref={canvasRef}
         className="threejs-canvas"
