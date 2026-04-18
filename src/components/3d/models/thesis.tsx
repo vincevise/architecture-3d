@@ -26,65 +26,19 @@ const ThesisScene = ({ width, height }: Props) => {
       height: height ? height : window.innerHeight
     };
 
-    const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 10000);
-    camera.position.set(35, 15, 30);
+    // Camera
+    const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000000);
+    camera.position.set(100, 100, 100);
     scene.add(camera);
 
     const axisHelper = new THREE.AxesHelper(10);
     scene.add(axisHelper);
 
-    // Loader for GLB (optimized version of the STL)
-    const loader = new GLTFLoader();
-
-    loader.load('/thesis/thesis.glb', (gltf) => {
-      const model = gltf.scene;
-
-      // Center the model
-      const box = new THREE.Box3().setFromObject(model);
-      const center = box.getCenter(new THREE.Vector3());
-      model.position.sub(center);
-
-      model.traverse((child: any) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          // Apply a clean material if needed, or keep the default
-          child.material = new THREE.MeshStandardMaterial({
-            color: '#c0c0c0',
-            metalness: 0.1,
-            roughness: 0.5,
-          });
-        }
-      });
-      
-      model.scale.set(0.1, 0.1, 0.1); 
-      // Rotation might be different for GLB depending on conversion, 
-      // but usually GLTF is Y-up. Let's start with neutral or keep previous if it worked.
-      // previous STL had -Math.PI / 2 on X. GLB converted from trimesh might be different.
-      // model.rotation.x = -Math.PI / 2; 
-
-      scene.add(model);
-    }, 
-    (xhr) => {
-      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-    },
-    (error) => {
-      console.error('An error happened', error);
-    });
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
-    scene.add(ambientLight);
-
-    const directionalLight: any = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.set(2048, 2048);
-    directionalLight.position.set(10, 20, 10);
-    scene.add(directionalLight);
-
+    // Initial Controls Setup
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(0, 0, 0);
     controls.enableDamping = true;
 
+    // Renderer
     const renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       alpha: true,
@@ -95,9 +49,81 @@ const ThesisScene = ({ width, height }: Props) => {
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
+    // Loader for GLB
+    const loader = new GLTFLoader();
+
+    loader.load('/thesis/thesis.glb', (gltf) => {
+      const model = gltf.scene;
+
+      // 1. Calculate the bounding box of the original model
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+
+      console.log('Model Size:', size);
+      console.log('Model Center:', center);
+
+      // 2. Normalize the model scale
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scaleFactor = 50 / maxDim;
+      model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+      // 3. Rotate to fix vertical alignment (Z-up to Y-up)
+      model.rotation.x = -Math.PI / 2;
+
+      // 4. Position the model correctly after rotation
+      // Since it's rotated, we adjust based on the original center
+      model.position.x = -center.x * scaleFactor;
+      // After rotation on X, Y becomes Z and Z becomes -Y
+      model.position.y = center.z * scaleFactor;
+      model.position.z = -center.y * scaleFactor;
+
+      model.traverse((child: any) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          child.material = new THREE.MeshStandardMaterial({
+            color: '#c0c0c0',
+            metalness: 0.2,
+            roughness: 0.4,
+          });
+        }
+      });
+      
+      // 4. Set camera at a predictable distance for a 50-unit model
+      camera.position.set(60, 40, 60);
+      camera.lookAt(0, 0, 0);
+      
+      controls.target.set(0, 0, 0);
+      controls.update();
+
+      scene.add(model);
+    }, 
+    (xhr) => {
+      if (xhr.total > 0) {
+        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+      }
+    },
+    (error) => {
+      console.error('Model loading error:', error);
+    });
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.set(2048, 2048);
+    directionalLight.position.set(100, 200, 100);
+    scene.add(directionalLight);
+
     const handleResize = () => {
-      sizes.width = containerRef.current?.clientWidth || window.innerWidth;
-      sizes.height = containerRef.current?.clientHeight || window.innerHeight;
+      if (!containerRef.current) return;
+      sizes.width = containerRef.current.clientWidth;
+      sizes.height = containerRef.current.clientHeight;
       camera.aspect = sizes.width / sizes.height;
       camera.updateProjectionMatrix();
       renderer.setSize(sizes.width, sizes.height);
@@ -108,7 +134,6 @@ const ThesisScene = ({ width, height }: Props) => {
 
     const tick = () => {
       controls.update();
-      renderer.setClearColor(0x000000, 0);
       renderer.render(scene, camera);
       window.requestAnimationFrame(tick);
     };
@@ -132,7 +157,7 @@ const ThesisScene = ({ width, height }: Props) => {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+    <div ref={containerRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#000' }}>
       <canvas
         ref={canvasRef}
         className="threejs-canvas"
